@@ -1,0 +1,14 @@
+Continue the following discussion between the advisors, focusing on the next most important aspect 
+of the document that hasn't been thoroughly discussed yet:
+
+DOCUMENT TITLE: {title}
+
+PREVIOUS DISCUSSION:
+{previous_discussion}
+
+DISCUSSION FOCUS FOR THIS ROUND:
+{discussion_focus}
+
+Have the advisors build on their previous points, explore new aspects, and continue to challenge each other respectfully.
+Make sure each advisor speaks at least once and stays true to their perspective.
+Conclude this round with a brief summary of the new insights gained.

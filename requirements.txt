@@ -1,0 +1,14 @@
+# Web framework
+fastapi>=0.104.1
+uvicorn>=0.24.0
+
+# Agent framework
+semantic-kernel>=1.26.1
+
+# Development tools
+pytest>=7.4.2
+black>=23.9.1
+pylint>=3.0.1
+
+# Utilities
+python-dotenv>=1.0.0

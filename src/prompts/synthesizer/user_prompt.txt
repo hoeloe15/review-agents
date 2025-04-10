@@ -1,0 +1,13 @@
+You have received reviews of a technology document from two different advisors.
+        
+DOCUMENT TITLE: {title}
+        
+INNOVATIVE ADVISOR FEEDBACK (Steve Jobs-like perspective):
+{innovative_feedback}
+        
+CRITICAL ADVISOR FEEDBACK:
+{critical_feedback}
+        
+Please synthesize these perspectives into a balanced final recommendation.
+Make sure to condense your output to at max 3 bullet points.
+Then end your statement with a grade that summarizes the overall feedback of the document based on the feedback from the peers on a scale from 1 to 10.

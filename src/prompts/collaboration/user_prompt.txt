@@ -1,0 +1,22 @@
+Facilitate a discussion between the following advisors who have all reviewed this document:
+
+DOCUMENT TITLE: {title}
+
+DOCUMENT:
+{document}
+
+INNOVATIVE ADVISOR (Steve Jobs-like perspective) INITIAL FEEDBACK:
+{innovative_feedback}
+
+CRITICAL ADVISOR INITIAL FEEDBACK:
+{critical_feedback}
+
+BUSINESS ADVISOR INITIAL FEEDBACK:
+{business_feedback}
+
+DISCUSSION FOCUS:
+{discussion_focus}
+
+Generate a realistic discussion between these three personas, keeping each contribution true to their perspective.
+Include at least one round of disagreement and resolution on a key point.
+Conclude with a brief summary of the key insights from this discussion.

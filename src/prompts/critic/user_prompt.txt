@@ -1,0 +1,9 @@
+Review this technology document and provide your critical analysis:
+        
+TITLE: {title}
+        
+DOCUMENT:
+{document}
+        
+Focus on identifying flaws, assumptions, market challenges, and implementation issues.
+Be brutally honest but constructive, providing specific improvements for each criticism.
