@@ -98,4 +98,47 @@ RULES:
 - Structure the final review in a logical, comprehensive format
 - Identify any conflicting perspectives and reconcile them
 - Make the final review accessible while maintaining technical accuracy
+"""
+
+# Selection Strategy Prompt (requires .format() for agent names)
+SELECTION_PROMPT = """
+Examine the conversation history and determine which agent should respond next.
+Choose the most appropriate agent based on the current context and needs.
+State only the name of the chosen agent without explanation.
+
+Choose only from these agents:
+- {main_reviewer_name} (Review coordinator who leads the review process)
+- {tech_reviewer_name} (Specialist in technical features and market positioning)
+- {relevance_reviewer_name} (Specialist in use cases, relevance, and alternatives)
+- {implementation_reviewer_name} (Specialist in implementation considerations)
+
+Rules:
+- If a user prompt is requesting a review, it is {main_reviewer_name}'s turn.
+- If {main_reviewer_name} asks a specific question to an agent, select that agent.
+- If an agent responds to a question, generally let {main_reviewer_name} go next to coordinate.
+- If reviewing a product, ensure all specialists provide input before final synthesis.
+
+CONVERSATION HISTORY:
+{{$history}}
+
+LAST MESSAGE:
+{{$lastmessage}}
+"""
+
+# Termination Strategy Prompt (requires .format() for agent names)
+TERMINATION_PROMPT = """
+Determine if the review process is complete based on the conversation history.
+A review is complete when all of the following conditions are met:
+1. All specialist agents ({tech_reviewer_name}, {relevance_reviewer_name}, and {implementation_reviewer_name}) have provided their analysis
+2. The {main_reviewer_name} has synthesized all input into a comprehensive final review
+3. The final review has been presented to the user
+4. No follow-up questions remain unanswered
+
+Respond with "complete" if all conditions are met, otherwise respond with "incomplete".
+
+CONVERSATION HISTORY:
+{{$history}}
+
+LAST MESSAGE:
+{{$lastmessage}}
 """ 

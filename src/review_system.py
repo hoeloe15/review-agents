@@ -10,10 +10,12 @@ from typing import AsyncIterable
 
 from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
 from semantic_kernel.agents.strategies import (
-    SequentialSelectionStrategy, 
-    DefaultTerminationStrategy
+    KernelFunctionSelectionStrategy,
+    KernelFunctionTerminationStrategy,
 )
+from semantic_kernel.contents import ChatHistoryTruncationReducer
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
+from semantic_kernel.functions import KernelFunctionFromPrompt
 
 from kernel_provider import KernelProvider
 from prompts import (
@@ -21,6 +23,8 @@ from prompts import (
     RELEVANCE_ANALYST_PROMPT,
     IMPLEMENTATION_ANALYST_PROMPT,
     COORDINATOR_PROMPT,
+    SELECTION_PROMPT, 
+    TERMINATION_PROMPT
 )
 
 logger = logging.getLogger(__name__)
@@ -86,29 +90,63 @@ class ReviewSystem:
             instructions=COORDINATOR_PROMPT
         )
     
+    def _create_selection_function(self) -> KernelFunctionFromPrompt:
+        """Create a function to determine which agent should respond next."""
+        return KernelFunctionFromPrompt(
+            function_name="selection",
+            prompt=SELECTION_PROMPT.format(
+                main_reviewer_name=MAIN_REVIEWER_NAME,
+                tech_reviewer_name=TECH_REVIEWER_NAME,
+                relevance_reviewer_name=RELEVANCE_REVIEWER_NAME,
+                implementation_reviewer_name=IMPLEMENTATION_REVIEWER_NAME
+            )
+        )
+    
+    def _create_termination_function(self) -> KernelFunctionFromPrompt:
+        """Create a function to determine when the review is complete."""
+        return KernelFunctionFromPrompt(
+            function_name="termination",
+            prompt=TERMINATION_PROMPT.format(
+                main_reviewer_name=MAIN_REVIEWER_NAME,
+                tech_reviewer_name=TECH_REVIEWER_NAME,
+                relevance_reviewer_name=RELEVANCE_REVIEWER_NAME,
+                implementation_reviewer_name=IMPLEMENTATION_REVIEWER_NAME
+            )
+        )
+    
     def _create_group_chat(self) -> AgentGroupChat:
         """Create the agent group chat with all specialized agents."""
-        # Define the agent order for sequential execution (Coordinator starts)
-        agent_sequence = [
-            self.review_coordinator,
-            self.tech_reviewer,
-            self.relevance_analyst,
-            self.implementation_analyst
-        ]
-
-        # Create agent group chat using simpler strategies
+        selection_function = self._create_selection_function()
+        termination_function = self._create_termination_function()
+        
+        selection_history_reducer = ChatHistoryTruncationReducer(target_count=5)
+        termination_history_reducer = ChatHistoryTruncationReducer(target_count=10)
+        
         return AgentGroupChat(
-            agents=agent_sequence,
-            # Strategy to cycle through agents in the defined order
-            selection_strategy=SequentialSelectionStrategy(
-                agents=agent_sequence,
-                # Set initial_agent explicitly if needed, though Sequential often starts from the beginning
-                initial_agent=self.review_coordinator
+            agents=[
+                self.review_coordinator,
+                self.tech_reviewer,
+                self.relevance_analyst,
+                self.implementation_analyst
+            ],
+            selection_strategy=KernelFunctionSelectionStrategy(
+                initial_agent=self.review_coordinator,
+                function=selection_function,
+                kernel=self.kernel,
+                result_parser=lambda result: str(result.value[0]).strip() if result.value else MAIN_REVIEWER_NAME,
+                history_variable_name="lastmessage",
+                all_history_variable_name="history",
+                history_reducer=selection_history_reducer,
             ),
-            # Strategy to terminate after a fixed number of turns
-            termination_strategy=DefaultTerminationStrategy(
-                # Allow coordinator start + 2 rounds for each specialist (1 + 4 + 4 = 9 turns)
-                maximum_iterations=9 
+            termination_strategy=KernelFunctionTerminationStrategy(
+                agents=[self.review_coordinator],
+                function=termination_function,
+                kernel=self.kernel,
+                result_parser=lambda result: "complete" in result.value[0].content.lower() if result.value and result.value[0].content else False,
+                history_variable_name="lastmessage",
+                all_history_variable_name="history",
+                maximum_iterations=25,
+                history_reducer=termination_history_reducer,
             ),
         )
     
