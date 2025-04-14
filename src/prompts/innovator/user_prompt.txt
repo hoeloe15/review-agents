@@ -1,9 +1,0 @@
-Review this technology document and provide your visionary feedback:
-        
-TITLE: {title}
-        
-DOCUMENT:
-{document}
-        
-Focus on the innovative potential, design elegance, and how this technology could change the landscape.
-Highlight strengths from an innovation perspective and suggest how to make this more revolutionary.

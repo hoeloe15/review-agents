@@ -1,1 +1,0 @@
-okay. But this is now very detailed to the exact agents i am using in my application. Coming back to having this as a functionality that should be added to semantic kernel, so we can maybe import this functionality. Do you think we can come up with something like this? 
