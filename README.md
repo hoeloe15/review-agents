@@ -62,11 +62,11 @@ This will generate a comprehensive review with input from all specialized agents
 
 ```python
 import asyncio
-from src.agents.review_writer import ReviewWriterSystem
+from src.review_system import ReviewSystem
 
 async def generate_review():
     # Initialize the review writer system
-    review_system = ReviewWriterSystem()
+    review_system = ReviewSystem()
     
     # Define the review prompt
     prompt = "Review the new XYZ Quantum Computing platform, focusing on its technical capabilities, market relevance, and implementation requirements."
@@ -85,8 +85,8 @@ The system includes plugins for specialized review functionality:
 
 ```python
 import asyncio
-from src.agents.review_writer import ReviewWriterSystem, setup_kernel_with_plugins
-from semantic_kernel.kernel_pydantic import KernelBaseModel
+from src.review_system import ReviewSystem
+from src.utils import setup_kernel_with_plugins
 
 async def generate_review_with_plugins():
     # Setup kernel with review plugins

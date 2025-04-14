@@ -1,0 +1,5 @@
+Nog toe te voegen:
+
+- Een image generator plugin of agent die de review kan visualiseren in een image
+- Hierop volgend, miss een architecture diagram generator?
+- 
