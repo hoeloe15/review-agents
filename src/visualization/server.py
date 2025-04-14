@@ -44,43 +44,9 @@ review_state = {"is_running": False, "document_path": None, "title": None}
 @app.get("/", response_class=HTMLResponse)
 async def get():
     """Serve the main visualization page."""
-    try:
-        with open(templates_dir / "index.html") as f:
-            return f.read()
-    except FileNotFoundError:
-        return """
-        <html>
-            <head><title>Technology Review Board</title></head>
-            <body>
-                <h1>Technology Review Board</h1>
-                <p>Enter a document path to review:</p>
-                <input type="text" id="doc-path" placeholder="/workspaces/pbod/samples/sample.txt">
-                <button onclick="startReview()">Start Review</button>
-                <div id="messages"></div>
-
-                <script>
-                    const socket = new WebSocket(`ws://${window.location.host}/ws`);
-                    
-                    socket.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        const messagesDiv = document.getElementById('messages');
-                        const p = document.createElement('p');
-                        p.textContent = data.message || JSON.stringify(data);
-                        messagesDiv.appendChild(p);
-                    };
-                    
-                    function startReview() {
-                        const path = document.getElementById('doc-path').value;
-                        fetch('/start-review', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ path: path })
-                        });
-                    }
-                </script>
-            </body>
-        </html>
-        """
+    with open(templates_dir / "index.html") as f:
+        return f.read()
+   
 
 
 @app.websocket("/ws")
@@ -260,11 +226,27 @@ def start_server():
     return f"http://{host}:{port}"
 
 
-if __name__ == "__main__":
-    start_server()
+def main():
+    """Main entry point function that can be imported by main.py"""
+    server_url = start_server()
+    
+    print(f"\n{'='*70}")
+    print("Technology Review Board running at:")
+    print(f"{server_url}")
+    print("Open this URL in a browser to analyze documents")
+    print(f"{'='*70}\n")
+    
     try:
         # Keep the main thread alive
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        print("\nApplication stopped. Goodbye!")
         logger.info("Server stopped")
+    except Exception as e:
+        logger.error(f"Error starting application: {e}")
+        logger.exception("Full exception details:")
+
+
+if __name__ == "__main__":
+    main()

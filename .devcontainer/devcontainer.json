@@ -1,0 +1,16 @@
+{
+  "name": "Python Dev Container with uv",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": [
+    "ms-python.python",
+    "charliermarsh.ruff",
+    "github.copilot"
+  ],
+  "postCreateCommand": "uv venv .venv && . .venv/bin/activate && uv pip install -r requirements.txt",
+  "remoteUser": "vscode"
+}
