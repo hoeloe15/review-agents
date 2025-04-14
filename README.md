@@ -1,24 +1,26 @@
-# Technology Review Board
+# Review Writer Agent System
 
-A simple agent-based system for evaluating technology documents through group discussion.
+This system uses Semantic Kernel agents to generate comprehensive, multi-perspective reviews based on input prompts. The system consists of specialized agents that collaborate to analyze different aspects of a product or technology, coordinated by a main reviewer agent.
 
-## Overview
+## System Architecture
 
-This system implements a group chat of agents with different perspectives to review technology documents:
+The Review Writer system uses the following agents:
 
-- **Lead Technology Advisor**: Guides the discussion and provides balanced insights
-- **Innovative Visionary**: Focuses on potential and transformative aspects
-- **Critical Reviewer**: Identifies flaws, challenges, and limitations
-- **Business Advisor**: Evaluates business viability and market potential
+1. **Review Coordinator (Main Agent)**: Leads the review process, asks questions, synthesizes information, and produces the final review.
 
-The agents engage in a debate-style discussion analyzing the document from their unique perspectives.
+2. **Technology Reviewer**: Analyzes technical features, capabilities, market positioning, and value proposition.
 
-## Key Features
+3. **Relevance Analyst**: Assesses use cases, relevance, and compares with alternative solutions.
 
-- **Multi-Agent Group Chat**: True debate-style discussion between agents with different personas
-- **Semantic Kernel Integration**: Uses SK's AgentGroupChat for sophisticated agent interactions
-- **Real-Time Visualization**: Web interface to watch the agent discussion unfold
-- **Markdown Output**: Generates a cleanly formatted review report
+4. **Implementation Analyst**: Evaluates implementation complexity, integration capabilities, scalability, and maintenance requirements.
+
+## How It Works
+
+1. The system takes an input prompt describing what needs to be reviewed.
+2. The Review Coordinator asks specialized agents for their analysis.
+3. Each specialized agent provides their perspective on the topic.
+4. The Review Coordinator synthesizes all input into a comprehensive review.
+5. The final review includes technical assessment, relevance analysis, implementation considerations, and more.
 
 ## Setup
 
@@ -48,78 +50,96 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Command Line
+### Basic Usage
 
 ```bash
-python src/main.py [document_path] [options]
+python review_example.py --prompt "Review the latest Python 3.11 release, focusing on performance improvements, new features, and compatibility considerations."
 ```
 
-Options:
-- `--title TEXT`: Custom title for the review
-- `--output PATH`: Custom output path for results
-- `--rounds INTEGER`: Number of discussion rounds (default: 2)
-- `--verbose`: Show detailed logging
-- `--visualize`: Open web visualization
+This will generate a comprehensive review with input from all specialized agents.
 
-Example:
-```bash
-python src/main.py samples/sample.txt --rounds 3 --visualize
+### Programmatic Usage
+
+```python
+import asyncio
+from src.agents.review_writer import ReviewWriterSystem
+
+async def generate_review():
+    # Initialize the review writer system
+    review_system = ReviewWriterSystem()
+    
+    # Define the review prompt
+    prompt = "Review the new XYZ Quantum Computing platform, focusing on its technical capabilities, market relevance, and implementation requirements."
+    
+    # Generate the review
+    async for message in review_system.generate_review(prompt):
+        print(f"## {message.name}:\n{message.content}\n")
+
+if __name__ == "__main__":
+    asyncio.run(generate_review())
 ```
 
-### Web Interface
+### Advanced Usage with Plugins
 
-To use the web interface:
+The system includes plugins for specialized review functionality:
 
-1. Start the visualization server:
-   ```bash
-   python src/visualization_server.py
-   ```
+```python
+import asyncio
+from src.agents.review_writer import ReviewWriterSystem, setup_kernel_with_plugins
+from semantic_kernel.kernel_pydantic import KernelBaseModel
 
-2. Open a browser to http://0.0.0.0:8000
-3. Enter the document path and options
-4. Click "Start Review" to begin
+async def generate_review_with_plugins():
+    # Setup kernel with review plugins
+    kernel = setup_kernel_with_plugins()
+    
+    # Initialize with custom kernel and handle responses
+    # ... custom implementation ...
 
-## Architecture
+if __name__ == "__main__":
+    asyncio.run(generate_review_with_plugins())
+```
 
-This system uses Semantic Kernel's AgentGroupChat to enable sophisticated agent interactions:
+## System Prompts
 
-1. **ChatCompletionAgent**: Individual agents with specific personas and instructions
-2. **AgentGroupChat**: Manages the conversation flow between agents
-3. **DocumentReviewChat**: Coordinates the review process and visualization
-4. **Visualization Server**: Provides real-time web visualization of discussions
+Each agent uses a specialized system prompt that defines its focus:
 
-## Output
+- **Review Coordinator**: Synthesizes inputs from all specialists and creates the final review
+- **Technology Reviewer**: Focuses on technical features and market positioning
+- **Relevance Analyst**: Analyzes use cases, alternatives, and comparative advantages
+- **Implementation Analyst**: Evaluates implementation considerations and requirements
 
-Results are saved in two formats:
-1. JSON file with the full results data
-2. Markdown file with a formatted report
+## Example Output
 
-Files are saved to `/workspaces/pbod/review_results/` by default.
+The generated review will follow this structure:
 
-## How It Works
+```markdown
+# Comprehensive Review: [Product Name]
 
-The system simulates a debate between different expert personas:
+## Executive Summary
+[A brief summary of the review findings]
 
-1. The document is presented to the group with specific review instructions
-2. Each agent analyzes the document from their unique perspective
-3. Agents engage in a multi-round discussion, responding to each other's points
-4. The Lead Advisor guides the conversation and synthesizes insights
-5. A final recommendation is generated based on the full discussion
+## Technical Assessment
+[Analysis of technical features and capabilities]
 
-## Troubleshooting
+## Relevance and Alternatives Analysis
+[Analysis of relevance, use cases, and alternatives]
 
-### Error with Agent Names
-If you see validation errors about agent names not matching patterns, check that spaces in agent names have been replaced with underscores in the code.
+## Implementation Considerations
+[Analysis of implementation requirements and considerations]
 
-### API Key Issues
-Make sure your `.env` file has the correct API key and model settings. The system requires at least OpenAI API access.
-
-### No Response or Slow Responses
-Semantic Kernel requires a bit of time for the agents to process the document and respond. Be patient during the first few exchanges.
+## Conclusion
+[Overall assessment and recommendations]
+```
 
 ## Future Enhancements
 
-1. **Custom Agent Creation**: Allow users to define their own agent personas
-2. **Enhanced Visualization**: More interactive web interface with agent relationships
-3. **Domain-Specific Agents**: Specialized agents for different types of documents
-4. **Memory and Knowledge**: Incorporate external knowledge for more informed discussions
+1. **Web Connection**: Enable the Relevance Analyst to perform real-time research.
+2. **Internal Document Connection**: Allow the Implementation Analyst to access internal documentation.
+3. **Technical Documentation Integration**: Connect to product documentation for more accurate technical analysis.
+4. **Custom Prompts**: Allow customization of prompts and evaluation criteria.
+
+## Requirements
+
+- Semantic Kernel
+- Azure OpenAI service or OpenAI API access
+- Python 3.9+

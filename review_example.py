@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Example script for the Review Writer Agent system.
+Example script for the Review Writer system.
 
-This script demonstrates how to use the Review Writer Agent system
+This script demonstrates how to use the Review Writer system
 to generate comprehensive reviews based on input prompts.
 """
 
@@ -11,7 +11,8 @@ import logging
 import argparse
 from typing import List, Dict, Any
 
-from src.agents.review_writer import ReviewWriterSystem, format_agent_message
+from src.review_writer import ReviewSystem
+from src.review_writer.utils import format_agent_message
 
 # Configure logging
 logging.basicConfig(
@@ -32,8 +33,8 @@ async def generate_review(prompt: str) -> List[Dict[str, Any]]:
     """
     logger.info(f"Starting review generation for prompt: {prompt}")
     
-    # Initialize the review writer system
-    review_system = ReviewWriterSystem()
+    # Initialize the review system
+    review_system = ReviewSystem()
     
     # Generate review from the prompt
     responses: List[Dict[str, Any]] = []
