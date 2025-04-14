@@ -12,6 +12,8 @@ from typing import Optional
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, OpenAIChatCompletion
 
+from plugins.review_plugin import ReviewPlugin
+
 from dotenv import load_dotenv
 
 # Load environment variables if not already loaded
@@ -64,7 +66,7 @@ class KernelProvider:
         Create a new Semantic Kernel instance with appropriate configuration.
         
         First tries to use Azure OpenAI configuration, and if not available,
-        falls back to regular OpenAI configuration.
+        falls back to regular OpenAI configuration. Also loads the ReviewPlugin.
         
         Returns:
             A newly configured Semantic Kernel instance
@@ -73,6 +75,10 @@ class KernelProvider:
             ValueError: If required environment variables are missing
         """
         kernel = Kernel()
+        
+        # Load the ReviewPlugin
+        kernel.add_plugin(ReviewPlugin(), plugin_name="Reviewer")
+        logger.info("Loaded Reviewer plugin.")
         
         # First try to configure for Azure OpenAI
         if all(var in os.environ for var in ["AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY"]):

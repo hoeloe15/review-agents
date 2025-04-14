@@ -6,10 +6,9 @@ allowing agents to perform tasks related to review generation and formatting.
 """
 
 import logging
-from typing import Dict, Any
+import typing as t  # Add typing import
 
 from semantic_kernel.functions import kernel_function
-from semantic_kernel import KernelContext
 
 logger = logging.getLogger(__name__)
 
@@ -25,23 +24,27 @@ class ReviewPlugin:
         description="Format and synthesize a comprehensive review from multiple inputs",
         name="synthesize_review"
     )
-    async def synthesize_review(self, context: KernelContext) -> str:
+    async def synthesize_review(
+        self, 
+        tech_review: t.Annotated[str, "Detailed technical assessment from the TechnologyReviewer"],
+        relevance_review: t.Annotated[str, "Analysis of relevance and alternatives from the RelevanceAnalyst"],
+        implementation_review: t.Annotated[str, "Analysis of implementation details from the ImplementationAnalyst"],
+        product_name: t.Annotated[str, "The name of the product/technology being reviewed"],
+        summary: t.Annotated[str, "A concise executive summary of the review findings"]
+    ) -> str:
         """
         Format and synthesize a comprehensive review from multiple inputs.
         
         Args:
-            context: Contains 'tech_review', 'relevance_review', 'implementation_review',
-                    'product_name', and 'summary' as input variables.
+            tech_review: Detailed technical assessment.
+            relevance_review: Analysis of relevance and alternatives.
+            implementation_review: Analysis of implementation details.
+            product_name: Name of the product/technology.
+            summary: Executive summary.
                     
         Returns:
             A formatted comprehensive review that synthesizes all inputs.
         """
-        tech_review = context.variables.get("tech_review", "")
-        relevance_review = context.variables.get("relevance_review", "")
-        implementation_review = context.variables.get("implementation_review", "")
-        product_name = context.variables.get("product_name", "Product")
-        summary = context.variables.get("summary", "")
-        
         # Create structured review
         review = f"""
 # Comprehensive Review: {product_name}
@@ -71,18 +74,19 @@ market positioning, relevance, alternatives, and implementation considerations.
         description="Extract key takeaways from a review",
         name="extract_key_takeaways"
     )
-    async def extract_key_takeaways(self, context: KernelContext) -> str:
+    async def extract_key_takeaways(
+        self, 
+        review: t.Annotated[str, "The full text of the comprehensive review to extract takeaways from"]
+    ) -> str:
         """
         Extract and format key takeaways from a comprehensive review.
         
         Args:
-            context: Contains 'review' as input variable.
+            review: The comprehensive review text.
                     
         Returns:
-            A formatted list of key takeaways from the review.
+            A formatted instruction prompt for the LLM to extract key takeaways.
         """
-        review = context.variables.get("review", "")
-        
         # Format for extraction instruction
         instruction = f"""
 Extract 3-5 key takeaways from the following review. 
@@ -94,25 +98,26 @@ REVIEW:
 KEY TAKEAWAYS:
 """
         
-        logger.info("Extracted key takeaways from review")
-        return instruction  # This will be processed by the LLM
+        logger.info("Prepared instruction to extract key takeaways from review")
+        return instruction  
 
     @kernel_function(
-        description="Rate a product in specific categories",
+        description="Rate a product in specific categories based on a review",
         name="rate_product"
     )
-    async def rate_product(self, context: KernelContext) -> str:
+    async def rate_product(
+        self, 
+        review: t.Annotated[str, "The full text of the comprehensive review to base ratings on"]
+    ) -> str:
         """
-        Create a ratings summary for a product based on the review content.
+        Create a ratings summary instruction for a product based on the review content.
         
         Args:
-            context: Contains 'review' as input variable.
+            review: The comprehensive review text.
                     
         Returns:
-            A JSON string containing ratings in different categories.
+            A JSON string containing ratings instructions for the LLM.
         """
-        review = context.variables.get("review", "")
-        
         # Format instruction for rating generation
         instruction = f"""
 Based on the following review, rate the product in each category on a scale of 1-10:
@@ -156,25 +161,26 @@ Format your response as a JSON object with the following structure:
 Ensure the response is valid JSON.
 """
         
-        logger.info("Generated product ratings")
-        return instruction  # This will be processed by the LLM
+        logger.info("Prepared instruction to generate product ratings")
+        return instruction  
 
     @kernel_function(
-        description="Generate pros and cons for a product",
+        description="Generate pros and cons for a product based on a review",
         name="generate_pros_cons"
     )
-    async def generate_pros_cons(self, context: KernelContext) -> str:
+    async def generate_pros_cons(
+        self, 
+        review: t.Annotated[str, "The full text of the comprehensive review to extract pros and cons from"]
+    ) -> str:
         """
-        Generate a structured list of pros and cons based on the review.
+        Generate a structured list of pros and cons instruction based on the review.
         
         Args:
-            context: Contains 'review' as input variable.
+            review: The comprehensive review text.
                     
         Returns:
-            A formatted list of pros and cons.
+            A formatted instruction prompt for the LLM to generate pros and cons.
         """
-        review = context.variables.get("review", "")
-        
         instruction = f"""
 Based on the following review, generate a comprehensive list of pros and cons.
 Identify at least 3 pros and 3 cons, with brief explanations for each.
@@ -197,5 +203,5 @@ Format your response as follows:
 ...
 """
         
-        logger.info("Generated pros and cons list")
-        return instruction  # This will be processed by the LLM 
+        logger.info("Prepared instruction to generate pros and cons list")
+        return instruction 

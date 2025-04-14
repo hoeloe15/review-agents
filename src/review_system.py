@@ -10,19 +10,17 @@ from typing import AsyncIterable
 
 from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
 from semantic_kernel.agents.strategies import (
-    KernelFunctionSelectionStrategy,
-    KernelFunctionTerminationStrategy,
+    SequentialSelectionStrategy, 
+    DefaultTerminationStrategy
 )
-from semantic_kernel.contents import ChatHistoryTruncationReducer
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
-from semantic_kernel.functions import KernelFunctionFromPrompt
 
 from kernel_provider import KernelProvider
 from prompts import (
     TECH_REVIEWER_PROMPT,
     RELEVANCE_ANALYST_PROMPT,
     IMPLEMENTATION_ANALYST_PROMPT,
-    COORDINATOR_PROMPT
+    COORDINATOR_PROMPT,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,93 +86,29 @@ class ReviewSystem:
             instructions=COORDINATOR_PROMPT
         )
     
-    def _create_selection_function(self) -> KernelFunctionFromPrompt:
-        """Create a function to determine which agent should respond next."""
-        return KernelFunctionFromPrompt(
-            function_name="selection",
-            prompt=f"""
-Examine the conversation history and determine which agent should respond next.
-Choose the most appropriate agent based on the current context and needs.
-State only the name of the chosen agent without explanation.
-
-Choose only from these agents:
-- {MAIN_REVIEWER_NAME} (Review coordinator who leads the review process)
-- {TECH_REVIEWER_NAME} (Specialist in technical features and market positioning)
-- {RELEVANCE_REVIEWER_NAME} (Specialist in use cases, relevance, and alternatives)
-- {IMPLEMENTATION_REVIEWER_NAME} (Specialist in implementation considerations)
-
-Rules:
-- If a user prompt is requesting a review, it is {MAIN_REVIEWER_NAME}'s turn.
-- If {MAIN_REVIEWER_NAME} asks a specific question to an agent, select that agent.
-- If an agent responds to a question, generally let {MAIN_REVIEWER_NAME} go next to coordinate.
-- If reviewing a product, ensure all specialists provide input before final synthesis.
-
-CONVERSATION HISTORY:
-{{$history}}
-
-LAST MESSAGE:
-{{$lastmessage}}
-"""
-        )
-    
-    def _create_termination_function(self) -> KernelFunctionFromPrompt:
-        """Create a function to determine when the review is complete."""
-        return KernelFunctionFromPrompt(
-            function_name="termination",
-            prompt=f"""
-Determine if the review process is complete based on the conversation history.
-A review is complete when all of the following conditions are met:
-1. All specialist agents ({TECH_REVIEWER_NAME}, {RELEVANCE_REVIEWER_NAME}, and {IMPLEMENTATION_REVIEWER_NAME}) have provided their analysis
-2. The {MAIN_REVIEWER_NAME} has synthesized all input into a comprehensive final review
-3. The final review has been presented to the user
-4. No follow-up questions remain unanswered
-
-Respond with "complete" if all conditions are met, otherwise respond with "incomplete".
-
-CONVERSATION HISTORY:
-{{$history}}
-
-LAST MESSAGE:
-{{$lastmessage}}
-"""
-        )
-    
     def _create_group_chat(self) -> AgentGroupChat:
         """Create the agent group chat with all specialized agents."""
-        # Create functions for agent selection and termination
-        selection_function = self._create_selection_function()
-        termination_function = self._create_termination_function()
-        
-        # Create history reducers
-        selection_history_reducer = ChatHistoryTruncationReducer(target_count=5)
-        termination_history_reducer = ChatHistoryTruncationReducer(target_count=10)
-        
-        # Create agent group chat
+        # Define the agent order for sequential execution (Coordinator starts)
+        agent_sequence = [
+            self.review_coordinator,
+            self.tech_reviewer,
+            self.relevance_analyst,
+            self.implementation_analyst
+        ]
+
+        # Create agent group chat using simpler strategies
         return AgentGroupChat(
-            agents=[
-                self.review_coordinator,
-                self.tech_reviewer,
-                self.relevance_analyst,
-                self.implementation_analyst
-            ],
-            selection_strategy=KernelFunctionSelectionStrategy(
-                initial_agent=self.review_coordinator,
-                function=selection_function,
-                kernel=self.kernel,
-                result_parser=lambda result: str(result.value[0]).strip() if result.value else MAIN_REVIEWER_NAME,
-                history_variable_name="lastmessage",
-                all_history_variable_name="history",
-                history_reducer=selection_history_reducer,
+            agents=agent_sequence,
+            # Strategy to cycle through agents in the defined order
+            selection_strategy=SequentialSelectionStrategy(
+                agents=agent_sequence,
+                # Set initial_agent explicitly if needed, though Sequential often starts from the beginning
+                initial_agent=self.review_coordinator
             ),
-            termination_strategy=KernelFunctionTerminationStrategy(
-                agents=[self.review_coordinator],
-                function=termination_function,
-                kernel=self.kernel,
-                result_parser=lambda result: "complete" in str(result.value[0]).lower() if result.value else False,
-                history_variable_name="lastmessage",
-                all_history_variable_name="history",
-                maximum_iterations=25,
-                history_reducer=termination_history_reducer,
+            # Strategy to terminate after a fixed number of turns
+            termination_strategy=DefaultTerminationStrategy(
+                # Allow coordinator start + 2 rounds for each specialist (1 + 4 + 4 = 9 turns)
+                maximum_iterations=9 
             ),
         )
     
@@ -194,6 +128,8 @@ LAST MESSAGE:
         await self.chat.reset()
         
         # Add the user prompt to the chat
+        # NOTE: The initial user prompt doesn't count towards maximum_iterations
+        # The first iteration starts when the first agent (Coordinator) responds.
         await self.chat.add_chat_message(message=prompt)
         
         # Invoke the chat and yield responses

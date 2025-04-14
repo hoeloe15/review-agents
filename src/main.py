@@ -10,9 +10,15 @@ import asyncio
 import logging
 from typing import List, Dict, Any
 
-from semantic_kernel.contents.chat_message_content import ChatMessageContent
+# Remove incorrect import
+# from plugins.review_plugin import ReviewPlugin 
 
+# Add correct import
 from review_system import ReviewSystem
+
+# Import ChatHistory
+from semantic_kernel.contents import ChatHistory
+
 from utils import format_agent_message
 
 # Configure logging
@@ -22,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def generate_review(prompt: str) -> List[Dict[str, Any]]:
+async def generate_review(prompt: str) -> ChatHistory:
     """
     Generate a comprehensive review based on the provided prompt.
     
@@ -30,13 +36,18 @@ async def generate_review(prompt: str) -> List[Dict[str, Any]]:
         prompt: The prompt to generate a review for
         
     Returns:
-        A list of responses from each agent in the review process
+        The full ChatHistory object containing the agent conversation.
     """
     logger.info(f"Starting review generation for prompt: {prompt}")
     
-    # Initialize the review system
+    # Initialize the review system CORRECTLY
     review_system = ReviewSystem()
     
+    # --- Diagnostic Logging --- 
+    logger.info(f"Type of review_system: {type(review_system)}")
+    logger.info(f"Type of review_system.generate_review: {type(review_system.generate_review)}")
+    # --- End Diagnostic Logging ---
+
     # Generate review from the prompt
     responses: List[Dict[str, Any]] = []
     
@@ -54,8 +65,9 @@ async def generate_review(prompt: str) -> List[Dict[str, Any]]:
             print(f"\n{response['formatted']}\n")
             print("-" * 80)
     
-    logger.info(f"Review generation complete with {len(responses)} total responses")
-    return responses
+    logger.info(f"Review generation complete with {len(review_system.chat.history.messages)} total messages in history")
+    # Return the entire history object
+    return review_system.chat.history
 
 async def main():
     """Main entry point for the Review Writer system."""
@@ -66,11 +78,27 @@ async def main():
     print(f"Generating review for prompt: {prompt}")
     print("=" * 80 + "\n")
     
-    # Generate review
-    await generate_review(prompt)
+    # Generate review and get the history
+    final_history = await generate_review(prompt)
     
     print("\n" + "=" * 80)
-    print("Review generation complete!")
+    print("Full Conversation History:")
+    print("=" * 80)
+    
+    if final_history and final_history.messages:
+        for message in final_history.messages:
+            # Use a generic name like 'USER' if message.name is None (for initial user prompt)
+            agent_name = message.name if message.name else "USER"
+            # Skip system messages if any (though we don't explicitly add them)
+            if message.role == "system": 
+                continue
+            print(f"\n{format_agent_message(agent_name, message.content)}\n")
+            print("-" * 40) # Shorter separator for history view
+    else:
+        print("\nNo messages found in the final history.\n")
+
+    print("\n" + "=" * 80)
+    print("Review generation process complete!")
     print("=" * 80 + "\n")
 
 if __name__ == "__main__":
