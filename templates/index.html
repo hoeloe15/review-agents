@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Review System Demo</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Multi-Agent Review System Demo</h1>
+        <p class="subtitle">Watch AI agents collaborate to create comprehensive reviews in real-time</p>
+    </header>
+
+    <main>
+        <section id="input-section">
+            <form id="review-form">
+                <div class="form-group">
+                    <label for="prompt">Enter a topic to review:</label>
+                    <input type="text" id="prompt" name="prompt"
+                        placeholder="e.g., Python 3.11, MacBook Pro M3, ChatGPT-4" required>
+                </div>
+                <button type="submit" id="start-button">Start Review</button>
+            </form>
+        </section>
+
+        <section id="agents-info">
+            <h2>Meet the Agents</h2>
+            <div class="agents-grid">
+                <div class="agent-card">
+                    <h3>ReviewCoordinator</h3>
+                    <p>Orchestrates the review process and synthesizes information from the specialist agents.</p>
+                </div>
+                <div class="agent-card">
+                    <h3>TechnologyReviewer</h3>
+                    <p>Analyzes technical features, capabilities, and marketplace positioning.</p>
+                </div>
+                <div class="agent-card">
+                    <h3>RelevanceAnalyst</h3>
+                    <p>Assesses use cases, alternatives, and comparative advantages/disadvantages.</p>
+                </div>
+                <div class="agent-card">
+                    <h3>ImplementationAnalyst</h3>
+                    <p>Evaluates implementation requirements, scalability, and maintenance considerations.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="review-section" class="hidden">
+            <h2>Review Generation in Progress</h2>
+            <div id="status-bar">
+                <span id="status-message">Initializing...</span>
+                <div id="thinking-indicator" class="hidden">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+
+            <div id="conversation">
+                <!-- Messages will be added here dynamically -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Semantic Kernel Multi-Agent Demo | Built with FastAPI and Python</p>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>

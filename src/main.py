@@ -89,8 +89,10 @@ async def main():
         for message in final_history.messages:
             # Use a generic name like 'USER' if message.name is None (for initial user prompt)
             agent_name = message.name if message.name else "USER"
-            # Skip system messages if any (though we don't explicitly add them)
+            # Display system messages (previously they were skipped)
             if message.role == "system": 
+                print(f"\n[SYSTEM MESSAGE]: {message.content}\n")
+                print("-" * 40) # Shorter separator for history view
                 continue
             print(f"\n{format_agent_message(agent_name, message.content)}\n")
             print("-" * 40) # Shorter separator for history view

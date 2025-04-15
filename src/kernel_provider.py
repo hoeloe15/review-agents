@@ -17,7 +17,7 @@ from plugins.review_plugin import ReviewPlugin
 from dotenv import load_dotenv
 
 # Load environment variables if not already loaded
-load_dotenv()
+load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
 
@@ -100,23 +100,7 @@ class KernelProvider:
             except Exception as e:
                 logger.warning(f"Failed to configure Azure OpenAI: {e}. Trying standard OpenAI...")
         
-        # If Azure OpenAI configuration failed or is not available, try standard OpenAI
-        if "OPENAI_API_KEY" in os.environ:
-            try:
-                model = os.environ.get("OPENAI_MODEL", "gpt-4o")
-                
-                logger.info(f"Configuring kernel with OpenAI service (model: {model})")
-                
-                kernel.add_service(
-                    service=OpenAIChatCompletion(
-                        ai_model_id=model,
-                        api_key=os.environ["OPENAI_API_KEY"]
-                    )
-                )
-                return kernel
-            except Exception as e:
-                logger.error(f"Failed to configure OpenAI: {e}")
-                raise
+       
         
         # If we get here, we couldn't configure any service
         error_msg = "Could not configure AI service. Please check your environment variables."

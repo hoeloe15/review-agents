@@ -57,6 +57,9 @@ class ReviewSystem:
         
         # Create agent group chat with all agents
         self.chat = self._create_group_chat()
+        
+        # Add a system message to the chat history
+        self._add_system_message()
     
     def _create_tech_reviewer(self) -> ChatCompletionAgent:
         """Create the technology reviewer agent."""
@@ -162,8 +165,20 @@ class ReviewSystem:
         """
         logger.info(f"Generating review for prompt: {prompt}")
         
+        # Save any existing system messages
+        system_messages = [msg for msg in self.chat.history.messages if msg.role == "system"]
+        
         # Reset the chat for a new conversation
         await self.chat.reset()
+        
+        # Restore system messages if any were saved
+        if system_messages:
+            for system_msg in system_messages:
+                self.chat.history.messages.append(system_msg)
+            logger.info(f"Restored {len(system_messages)} system message(s) after reset")
+        else:
+            # If no system messages were saved, add a new one
+            self._add_system_message()
         
         # Add the user prompt to the chat
         # NOTE: The initial user prompt doesn't count towards maximum_iterations
@@ -176,3 +191,21 @@ class ReviewSystem:
                 continue
             logger.info(f"Response from {response.name}: {response.content[:50]}...")
             yield response 
+
+    def _add_system_message(self):
+        """Add a system message to the chat history to guide the agent conversation."""
+        from semantic_kernel.contents.chat_message_content import ChatMessageContent
+        from semantic_kernel.contents.utils.author_role import AuthorRole
+        
+        system_message = ChatMessageContent(
+            role=AuthorRole.SYSTEM,
+            content="""You are a team of specialized reviewers working together to create a comprehensive, 
+            well-structured review. The ReviewCoordinator will guide the process and summarize findings from 
+            other specialists. Each specialist should provide thorough analysis in their area of expertise."""
+        )
+        
+        # Add the system message to the chat history directly
+        # This bypasses the add_chat_message methods that would previously reject system messages
+        self.chat.history.messages.append(system_message)
+        
+        logger.info("Added system message to chat history") 
