@@ -1,10 +1,15 @@
-# Core dependencies
-semantic-kernel>=0.4.0,<0.5.0
+# Semantic Kernel Dependencies
+semantic-kernel==0.5.0.dev0
 python-dotenv>=1.0.0
 
-# Web framework (optional for API)
-fastapi>=0.104.1
+# Web Server Dependencies
+fastapi>=0.105.0
 uvicorn>=0.24.0
+jinja2>=3.1.2
+pydantic>=2.4.2
+
+# Azure OpenAI Dependencies
+azure-identity>=1.15.0
 
 # Development tools
 pytest>=7.4.2
@@ -13,4 +18,3 @@ pylint>=3.0.1
 
 # Additional utilities
 typing_extensions>=4.9.0
-pydantic>=2.5.2

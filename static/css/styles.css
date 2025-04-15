@@ -1,0 +1,336 @@
+/* Base styles */
+:root {
+    --color-primary: #2c3e50;
+    --color-secondary: #3498db;
+    --color-background: #f5f7fa;
+    --color-text: #333;
+    --color-light: #ecf0f1;
+    --color-coordinator: #9b59b6;
+    --color-tech: #3498db;
+    --color-relevance: #e67e22;
+    --color-implementation: #16a085;
+    --color-user: #7f8c8d;
+    --color-system: #c0392b;
+    --border-radius: 8px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--color-text);
+    background-color: var(--color-background);
+    padding: 0;
+    margin: 0;
+}
+
+/* Header */
+header {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+/* Main content */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+section {
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+h2 {
+    margin-bottom: 1.5rem;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--color-light);
+    padding-bottom: 0.5rem;
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+}
+
+button {
+    background-color: var(--color-secondary);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Agents grid */
+.agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.agent-card {
+    background-color: var(--color-light);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.agent-card h3 {
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+/* Review section */
+#review-section {
+    transition: opacity 0.5s;
+}
+
+#status-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.8rem;
+    background-color: var(--color-light);
+    border-radius: var(--border-radius);
+}
+
+#status-message {
+    flex: 1;
+}
+
+/* Conversation */
+#conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.message {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    position: relative;
+    max-width: 90%;
+    animation: fadeIn 0.5s;
+}
+
+.message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -10px;
+    width: 5px;
+    height: 100%;
+    border-radius: 5px;
+}
+
+.message.thinking {
+    background-color: #f9f9f9;
+    border: 1px dashed #ddd;
+}
+
+.message.ReviewCoordinator {
+    background-color: rgba(155, 89, 182, 0.1);
+}
+
+.message.ReviewCoordinator::before {
+    background-color: var(--color-coordinator);
+}
+
+.message.TechnologyReviewer {
+    background-color: rgba(52, 152, 219, 0.1);
+    align-self: flex-end;
+}
+
+.message.TechnologyReviewer::before {
+    background-color: var(--color-tech);
+}
+
+.message.RelevanceAnalyst {
+    background-color: rgba(230, 126, 34, 0.1);
+}
+
+.message.RelevanceAnalyst::before {
+    background-color: var(--color-relevance);
+}
+
+.message.ImplementationAnalyst {
+    background-color: rgba(22, 160, 133, 0.1);
+    align-self: flex-end;
+}
+
+.message.ImplementationAnalyst::before {
+    background-color: var(--color-implementation);
+}
+
+.message.User {
+    background-color: rgba(127, 140, 141, 0.1);
+}
+
+.message.User::before {
+    background-color: var(--color-user);
+}
+
+.message.System {
+    background-color: rgba(192, 57, 43, 0.1);
+    text-align: center;
+    max-width: 100%;
+}
+
+.message.System::before {
+    background-color: var(--color-system);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.agent-name {
+    font-weight: bold;
+}
+
+.agent-name.ReviewCoordinator {
+    color: var(--color-coordinator);
+}
+
+.agent-name.TechnologyReviewer {
+    color: var(--color-tech);
+}
+
+.agent-name.RelevanceAnalyst {
+    color: var(--color-relevance);
+}
+
+.agent-name.ImplementationAnalyst {
+    color: var(--color-implementation);
+}
+
+.agent-name.User {
+    color: var(--color-user);
+}
+
+.agent-name.System {
+    color: var(--color-system);
+}
+
+.message-content {
+    white-space: pre-wrap;
+}
+
+/* Thinking dots animation */
+#thinking-indicator {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-secondary);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.3);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Utilities */
+.hidden {
+    display: none;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--color-primary);
+    color: white;
+    margin-top: 2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .agents-grid {
+        grid-template-columns: 1fr;
+    }
+
+    main {
+        padding: 1rem;
+    }
+}

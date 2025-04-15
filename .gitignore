@@ -20,6 +20,35 @@ wheels/
 .installed.cfg
 *.egg
 
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local files
+.DS_Store
+Thumbs.db
+
 # Environment variables
 .env
 .venv
@@ -39,7 +68,3 @@ Thumbs.db
 
 # Azure
 azure_credentials.json
-
-# Logs
-logs/
-*.log
