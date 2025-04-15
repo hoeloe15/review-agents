@@ -7,6 +7,7 @@ to generate comprehensive reviews.
 
 import logging
 from typing import AsyncIterable
+import asyncio
 
 from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
 from semantic_kernel.agents.strategies import (
@@ -191,6 +192,86 @@ class ReviewSystem:
                 continue
             logger.info(f"Response from {response.name}: {response.content[:50]}...")
             yield response 
+
+    async def generate_review_stream(self, prompt: str) -> AsyncIterable[dict]:
+        """
+        Generate a comprehensive review and format responses for the frontend stream.
+        
+        This method is specifically designed to work with the frontend stream API.
+        It formats messages in the way the frontend expects them, with metadata.
+        
+        Args:
+            prompt: The prompt to generate a review for
+            
+        Yields:
+            dict: Formatted messages for the frontend with metadata
+        """
+        logger.info(f"Generating review stream for prompt: {prompt}")
+        
+        # Current turn counter
+        turn = 0
+        
+        # First notify the frontend that we're starting with the coordinator
+        yield {
+            "agent_name": MAIN_REVIEWER_NAME,
+            "content": "",
+            "turn": turn,
+            "status": "thinking"
+        }
+        
+        # Save any existing system messages
+        system_messages = [msg for msg in self.chat.history.messages if msg.role == "system"]
+        
+        # Reset the chat for a new conversation
+        await self.chat.reset()
+        
+        # Restore system messages if any were saved
+        if system_messages:
+            for system_msg in system_messages:
+                self.chat.history.messages.append(system_msg)
+            logger.info(f"Restored {len(system_messages)} system message(s) after reset")
+        else:
+            # If no system messages were saved, add a new one
+            self._add_system_message()
+        
+        # Add the user prompt to the chat
+        await self.chat.add_chat_message(message=prompt)
+        
+        # Invoke the chat and yield formatted responses
+        async for response in self.chat.invoke():
+            if response is None or not response.name:
+                continue
+                
+            # Increment turn counter
+            turn += 1
+            
+            # Create a "thinking" status message first
+            yield {
+                "agent_name": response.name,
+                "content": "",
+                "turn": turn,
+                "status": "thinking"
+            }
+            
+            # Very small delay to make the thinking indicator visible
+            await asyncio.sleep(0.5)
+            
+            # Then send the actual completed message
+            logger.info(f"Response from {response.name}: {response.content[:50]}...")
+            yield {
+                "agent_name": response.name,
+                "content": response.content,
+                "turn": turn,
+                "status": "complete"
+            }
+        
+        # Send an "end" notification when the review is complete
+        yield {
+            "agent_name": "System",
+            "content": "Review generation complete",
+            "turn": turn + 1,
+            "status": "end"
+        }
 
     def _add_system_message(self):
         """Add a system message to the chat history to guide the agent conversation."""
