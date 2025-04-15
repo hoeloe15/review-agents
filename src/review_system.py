@@ -44,8 +44,10 @@ class ReviewSystem:
         """Initialize the review system with specialized agents."""
         # Get a kernel instance from the provider
         self.kernel = KernelProvider.get_kernel()
+        logger.debug("Kernel instance obtained.")
         
         # Create the specialized agents
+        logger.debug("Creating specialized agents...")
         self.tech_reviewer = self._create_tech_reviewer()
         self.relevance_analyst = self._create_relevance_analyst()
         self.implementation_analyst = self._create_implementation_analyst()
@@ -56,6 +58,7 @@ class ReviewSystem:
     
     def _create_tech_reviewer(self) -> ChatCompletionAgent:
         """Create the technology reviewer agent."""
+        logger.debug(f"Creating agent: {TECH_REVIEWER_NAME}")
         return ChatCompletionAgent(
             kernel=self.kernel,
             name=TECH_REVIEWER_NAME,
@@ -64,6 +67,7 @@ class ReviewSystem:
     
     def _create_relevance_analyst(self) -> ChatCompletionAgent:
         """Create the relevance and alternatives analyst agent."""
+        logger.debug(f"Creating agent: {RELEVANCE_REVIEWER_NAME}")
         return ChatCompletionAgent(
             kernel=self.kernel,
             name=RELEVANCE_REVIEWER_NAME,
@@ -72,6 +76,7 @@ class ReviewSystem:
     
     def _create_implementation_analyst(self) -> ChatCompletionAgent:
         """Create the implementation analyst agent."""
+        logger.debug(f"Creating agent: {IMPLEMENTATION_REVIEWER_NAME}")
         return ChatCompletionAgent(
             kernel=self.kernel,
             name=IMPLEMENTATION_REVIEWER_NAME,
@@ -80,6 +85,7 @@ class ReviewSystem:
     
     def _create_review_coordinator(self) -> ChatCompletionAgent:
         """Create the main review coordinator agent."""
+        logger.debug(f"Creating agent: {MAIN_REVIEWER_NAME}")
         return ChatCompletionAgent(
             kernel=self.kernel,
             name=MAIN_REVIEWER_NAME,
@@ -89,6 +95,7 @@ class ReviewSystem:
     def _create_group_chat(self) -> AgentGroupChat:
         """Create the agent group chat with all specialized agents."""
         # Define the agent order for sequential execution (Coordinator starts)
+        logger.debug("Defining agent sequence for group chat.")
         agent_sequence = [
             self.review_coordinator,
             self.tech_reviewer,
@@ -97,6 +104,7 @@ class ReviewSystem:
         ]
 
         # Create agent group chat using simpler strategies
+        logger.debug("Creating AgentGroupChat with SequentialSelectionStrategy and DefaultTerminationStrategy.")
         return AgentGroupChat(
             agents=agent_sequence,
             # Strategy to cycle through agents in the defined order
@@ -125,16 +133,20 @@ class ReviewSystem:
         logger.info(f"Generating review for prompt: {prompt}")
         
         # Reset the chat for a new conversation
+        logger.debug("Resetting AgentGroupChat history.")
         await self.chat.reset()
         
         # Add the user prompt to the chat
+        logger.debug("Adding user prompt to chat history.")
         # NOTE: The initial user prompt doesn't count towards maximum_iterations
         # The first iteration starts when the first agent (Coordinator) responds.
         await self.chat.add_chat_message(message=prompt)
         
         # Invoke the chat and yield responses
+        logger.debug("Invoking agent chat...")
         async for response in self.chat.invoke():
             if response is None or not response.name:
+                logger.debug("Received empty response, skipping.")
                 continue
-            logger.info(f"Response from {response.name}: {response.content[:50]}...")
+            logger.debug(f"Yielding response from {response.name}.")
             yield response 
