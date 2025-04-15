@@ -8,6 +8,8 @@ comprehensive reviews based on a hardcoded prompt.
 
 import asyncio
 import logging
+import argparse
+import sys
 from typing import List, Dict, Any
 
 # Remove incorrect import
@@ -71,37 +73,67 @@ async def generate_review(prompt: str) -> ChatHistory:
 
 async def main():
     """Main entry point for the Review Writer system."""
-    # Hardcoded prompt - change this to review different topics
-    prompt = "Review the latest Python 3.11 release, focusing on performance improvements, new features, and compatibility considerations."
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Review Writer System")
+    parser.add_argument(
+        "--run-review", 
+        action="store_true", 
+        help="Run a review directly instead of starting the web server"
+    )
+    parser.add_argument(
+        "--prompt", 
+        type=str, 
+        default="Review the latest Python 3.11 release, focusing on performance improvements, new features, and compatibility considerations.",
+        help="The prompt to use for review generation (only used with --run-review)"
+    )
+    args = parser.parse_args()
     
-    print("\n" + "=" * 80)
-    print(f"Generating review for prompt: {prompt}")
-    print("=" * 80 + "\n")
-    
-    # Generate review and get the history
-    final_history = await generate_review(prompt)
-    
-    print("\n" + "=" * 80)
-    print("Full Conversation History:")
-    print("=" * 80)
-    
-    if final_history and final_history.messages:
-        for message in final_history.messages:
-            # Use a generic name like 'USER' if message.name is None (for initial user prompt)
-            agent_name = message.name if message.name else "USER"
-            # Display system messages (previously they were skipped)
-            if message.role == "system": 
-                print(f"\n[SYSTEM MESSAGE]: {message.content}\n")
+    if args.run_review:
+        # Run a review directly
+        prompt = args.prompt
+        
+        print("\n" + "=" * 80)
+        print(f"Generating review for prompt: {prompt}")
+        print("=" * 80 + "\n")
+        
+        # Generate review and get the history
+        final_history = await generate_review(prompt)
+        
+        print("\n" + "=" * 80)
+        print("Full Conversation History:")
+        print("=" * 80)
+        
+        if final_history and final_history.messages:
+            for message in final_history.messages:
+                # Use a generic name like 'USER' if message.name is None (for initial user prompt)
+                agent_name = message.name if message.name else "USER"
+                # Display system messages (previously they were skipped)
+                if message.role == "system": 
+                    print(f"\n[SYSTEM MESSAGE]: {message.content}\n")
+                    print("-" * 40) # Shorter separator for history view
+                    continue
+                print(f"\n{format_agent_message(agent_name, message.content)}\n")
                 print("-" * 40) # Shorter separator for history view
-                continue
-            print(f"\n{format_agent_message(agent_name, message.content)}\n")
-            print("-" * 40) # Shorter separator for history view
-    else:
-        print("\nNo messages found in the final history.\n")
+        else:
+            print("\nNo messages found in the final history.\n")
 
-    print("\n" + "=" * 80)
-    print("Review generation process complete!")
-    print("=" * 80 + "\n")
+        print("\n" + "=" * 80)
+        print("Review generation process complete!")
+        print("=" * 80 + "\n")
+    else:
+        # Start the web server
+        print("\n" + "=" * 80)
+        print("Starting the web server... Press Ctrl+C to stop.")
+        print("=" * 80 + "\n")
+        
+        # Import and run the web server
+        try:
+            from src.server import start_server
+            start_server()
+        except ImportError:
+            print("Error: Server module not found. Make sure you have the frontend files installed.")
+            print("You can run a review directly with: python main.py --run-review")
+            sys.exit(1)
 
 if __name__ == "__main__":
     # We still need asyncio.run() because the core functions are asynchronous

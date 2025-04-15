@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(title="Multi-Agent Review System Demo")
 
-# Create the ReviewSystem instance
-review_system = ReviewSystem()
+# We'll create the ReviewSystem instance per request, not at app startup
+# This ensures no work is done until explicitly requested
 
 # Templates directory for serving the HTML
 templates = Jinja2Templates(directory="templates")
@@ -55,6 +55,11 @@ async def start_review(review_request: ReviewRequest):
 @app.get("/api/stream")
 async def stream_review(prompt: str):
     """Stream the review generation process."""
+    
+    # Create a new ReviewSystem instance for this request
+    # This ensures we're not using a shared instance that might have
+    # state from previous requests
+    review_system = ReviewSystem()
     
     async def event_generator():
         try:
