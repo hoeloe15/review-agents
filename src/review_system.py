@@ -6,14 +6,11 @@ to generate comprehensive reviews.
 """
 
 import logging
-from typing import AsyncIterable
+from typing import AsyncIterable, List
 
 from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
-from semantic_kernel.agents.strategies import (
-    SequentialSelectionStrategy, 
-    DefaultTerminationStrategy
-)
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
+from semantic_kernel.contents.chat_history import ChatHistory
 
 from kernel_provider import KernelProvider
 from prompts import (
@@ -53,8 +50,14 @@ class ReviewSystem:
         self.implementation_analyst = self._create_implementation_analyst()
         self.review_coordinator = self._create_review_coordinator()
         
-        # Create agent group chat with all agents
-        self.chat = self._create_group_chat()
+        # Store agents in a sequence for manual orchestration
+        self.agent_sequence: List[ChatCompletionAgent] = [
+            self.review_coordinator,
+            self.tech_reviewer,
+            self.relevance_analyst,
+            self.implementation_analyst
+        ]
+        logger.debug(f"Agent sequence defined: {[agent.name for agent in self.agent_sequence]}")
     
     def _create_tech_reviewer(self) -> ChatCompletionAgent:
         """Create the technology reviewer agent."""
@@ -92,61 +95,73 @@ class ReviewSystem:
             instructions=COORDINATOR_PROMPT
         )
     
-    def _create_group_chat(self) -> AgentGroupChat:
-        """Create the agent group chat with all specialized agents."""
-        # Define the agent order for sequential execution (Coordinator starts)
-        logger.debug("Defining agent sequence for group chat.")
-        agent_sequence = [
-            self.review_coordinator,
-            self.tech_reviewer,
-            self.relevance_analyst,
-            self.implementation_analyst
-        ]
-
-        # Create agent group chat using simpler strategies
-        logger.debug("Creating AgentGroupChat with SequentialSelectionStrategy and DefaultTerminationStrategy.")
-        return AgentGroupChat(
-            agents=agent_sequence,
-            # Strategy to cycle through agents in the defined order
-            selection_strategy=SequentialSelectionStrategy(
-                agents=agent_sequence,
-                # Set initial_agent explicitly if needed, though Sequential often starts from the beginning
-                initial_agent=self.review_coordinator
-            ),
-            # Strategy to terminate after a fixed number of turns
-            termination_strategy=DefaultTerminationStrategy(
-                # Allow coordinator start + 2 rounds for each specialist (1 + 4 + 4 = 9 turns)
-                maximum_iterations=9 
-            ),
-        )
-    
-    async def generate_review(self, prompt: str) -> AsyncIterable[ChatMessageContent]:
+    async def generate_review(self, prompt: str) -> ChatHistory:
         """
-        Generate a comprehensive review based on the provided prompt.
+        Generate a comprehensive review based on the provided prompt using manual orchestration.
         
         Args:
             prompt: The prompt to generate a review for
             
-        Yields:
-            ChatMessageContent: Responses from the agents
+        Returns:
+           ChatHistory: The complete chat history after orchestration.
         """
-        logger.info(f"Generating review for prompt: {prompt}")
+        logger.info(f"Generating review for prompt using manual orchestration: {prompt}")
         
-        # Reset the chat for a new conversation
-        logger.debug("Resetting AgentGroupChat history.")
-        await self.chat.reset()
+        # Define maximum turns (matching previous strategy)
+        max_turns = 9 
+        turn_count = 0
         
-        # Add the user prompt to the chat
-        logger.debug("Adding user prompt to chat history.")
-        # NOTE: The initial user prompt doesn't count towards maximum_iterations
-        # The first iteration starts when the first agent (Coordinator) responds.
-        await self.chat.add_chat_message(message=prompt)
-        
-        # Invoke the chat and yield responses
-        logger.debug("Invoking agent chat...")
-        async for response in self.chat.invoke():
-            if response is None or not response.name:
-                logger.debug("Received empty response, skipping.")
-                continue
-            logger.debug(f"Yielding response from {response.name}.")
-            yield response 
+        # Create a new chat history for this review
+        history = ChatHistory()
+        logger.debug("Created new ChatHistory for this request.")
+
+        # Add the initial user prompt
+        history.add_user_message(prompt)
+        logger.debug("Added user prompt to chat history.")
+
+        # Manual Orchestration Loop
+        while turn_count < max_turns:
+            # Determine the current agent based on the sequence
+            current_agent_index = turn_count % len(self.agent_sequence)
+            current_agent = self.agent_sequence[current_agent_index]
+            turn_count += 1
+            
+            logger.info(f"Turn {turn_count}/{max_turns}: Invoking agent -> {current_agent.name}")
+
+            try:
+                # Invoke the agent with the current history
+                # Process the async generator to get the final message(s)
+                agent_response_messages = []
+                # Use positional argument for history based on error analysis
+                async for message_chunk in current_agent.invoke(history):
+                     agent_response_messages.append(message_chunk)
+                
+                # Assume the last message in the list is the final, complete one for this turn
+                if not agent_response_messages:
+                    logger.warning(f"Agent {current_agent.name} did not yield any messages. Skipping turn.")
+                    continue
+                    
+                final_message: ChatMessageContent = agent_response_messages[-1]
+                
+                if final_message is None or not final_message.content:
+                    logger.warning(f"Agent {current_agent.name} returned an empty final message content. Skipping turn.")
+                    continue
+                
+                # Ensure the message has the agent's name (should be set by ChatCompletionAgent)
+                if not final_message.name:
+                    final_message.name = current_agent.name
+                    
+                # Add the agent's response to the history
+                # Use the specific message object returned by the agent
+                history.add_message(message=final_message)
+                logger.debug(f"Added message from {current_agent.name} to history.")
+
+            except Exception as e:
+                logger.error(f"Error invoking agent {current_agent.name} on turn {turn_count}: {e}", exc_info=True)
+                # Decide how to handle errors: stop, skip agent, add error message to history?
+                # For now, we'll stop the process on error.
+                break
+                
+        logger.info(f"Manual orchestration finished after {turn_count} turns.")
+        return history # Return the final history object
+

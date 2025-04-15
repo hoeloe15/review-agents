@@ -61,54 +61,6 @@ logger = logging.getLogger(__name__)
 
 # --- End Logging Setup ---
 
-async def generate_review(prompt: str) -> ChatHistory:
-    """
-    Generate a comprehensive review based on the provided prompt.
-    
-    Args:
-        prompt: The prompt to generate a review for
-        
-    Returns:
-        The full ChatHistory object containing the agent conversation.
-    """
-    logger.info(f"Starting review generation for prompt: {prompt}")
-    
-    # Initialize the review system CORRECTLY
-    review_system = ReviewSystem()
-    
-    # --- Diagnostic Logging --- 
-    logger.info(f"Type of review_system: {type(review_system)}")
-    logger.info(f"Type of review_system.generate_review: {type(review_system.generate_review)}")
-    # --- End Diagnostic Logging ---
-
-    # Generate review from the prompt
-    responses: List[Dict[str, Any]] = []
-    message_count = 0 # Add message counter
-    
-    # Indicate processing start
-    print("\nAgents are processing the request... (Details in app.log)\n")
-    
-    async for message in review_system.generate_review(prompt):
-        message_count += 1
-        logger.debug(f"Processing message #{message_count}") # Log message count at DEBUG level
-        if message and message.name:
-            response = {
-                "agent": message.name,
-                "content": message.content,
-                "formatted": format_agent_message(message.name, message.content)
-            }
-            responses.append(response)
-            logger.info(f"Received response from {message.name}")
-            
-            # Print minimal update to console
-            print(f"  - Response from {message.name} received.")
-            # Remove detailed real-time printing
-            # print(f"\n{response['formatted']}\n")
-            # print("-" * 80)
-    
-    logger.info(f"Review generation complete with {len(review_system.chat.history.messages)} total messages in history (Processed {message_count} agent turns)")
-    # Return the entire history object
-    return review_system.chat.history
 
 async def main():
     """Main entry point for the Review Writer system."""
@@ -120,8 +72,33 @@ async def main():
     print(f"Generating review for prompt: {prompt}")
     print("=" * 80 + "\n")
     
-    # Generate review and get the history
-    final_history = await generate_review(prompt)
+    # Initialize the review system
+    review_system = ReviewSystem()
+    logger.info("ReviewSystem initialized.")
+    
+    # Indicate processing start
+    print("\nAgents are processing the request... (Details in app.log)\n")
+    
+    # --- Execute Manual Orchestration --- 
+    final_history: ChatHistory = None
+    try:
+        # Call the refactored generate_review which now returns the history
+        # We don't need to loop here anymore, the loop is inside generate_review
+        final_history = await review_system.generate_review(prompt)
+        
+        # Log completion details using the returned history
+        if final_history:
+             logger.info(f"Review generation complete with {len(final_history.messages)} total messages in history.")
+        else:
+             logger.warning("Review generation finished but final_history is None.")
+             
+    except Exception as e:
+        logger.error(f"An error occurred during review generation: {e}", exc_info=True)
+        # Ensure final_history is at least an empty history or similar for report generation
+        final_history = ChatHistory() 
+        final_history.add_system_message(f"ERROR during generation: {e}")
+    # --- End Orchestration ---
+
     
     # --- Generate Markdown Report ---
     logger.info(f"Generating Markdown report: {report_filename}")
@@ -189,21 +166,7 @@ async def main():
     # --- End Report Generation ---
         
     print("\n" + "=" * 80)
-    # Don't print full history to console by default
-    # print("Full Conversation History:")
-    # print("=" * 80)
-    
-    # if final_history and final_history.messages:
-    #     for message in final_history.messages:
-    #         # Use a generic name like 'USER' if message.name is None (for initial user prompt)
-    #         agent_name = message.name if message.name else "USER"
-    #         # Skip system messages if any (though we don't explicitly add them)
-    #         if message.role == "system": 
-    #             continue
-    #         print(f"\n{format_agent_message(agent_name, message.content)}\n")
-    #         print("-" * 40) # Shorter separator for history view
-    # else:
-    #     print("\nNo messages found in the final history.\n")
+
 
     print("\n" + "=" * 80)
     print("Review generation process complete!")
